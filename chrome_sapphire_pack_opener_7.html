@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Chrome Sapphire Pack Opener</title>
+<style>
+:root {
+  --bg:#050816; --panel:#0b1230; --ink:#eaf4ff; --muted:#8fa9c9; --blue:#145cff; --cyan:#30e8ff; --gold:#ffd36d;
+}
+* { box-sizing:border-box; }
+body {
+  margin:0; font-family:Inter, system-ui, -apple-system, Segoe UI, sans-serif;
+  color:var(--ink); background:
+    radial-gradient(circle at 20% 15%, rgba(0,114,255,.35), transparent 28%),
+    radial-gradient(circle at 80% 10%, rgba(0,255,213,.18), transparent 24%),
+    linear-gradient(135deg,#030612,#071333 55%,#02040b);
+  min-height:100vh; overflow-x:hidden;
+}
+.wrap { max-width:1200px; margin:0 auto; padding:24px; }
+header { display:flex; gap:18px; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; }
+h1 { margin:0; font-size:clamp(28px,4vw,54px); letter-spacing:-.04em; line-height:.95; }
+.sub { color:var(--muted); margin-top:8px; max-width:700px; }
+button {
+  border:0; border-radius:16px; color:white; background:linear-gradient(135deg,#123dff,#10d8ff);
+  padding:14px 20px; font-weight:800; cursor:pointer; box-shadow:0 12px 35px rgba(0,80,255,.35);
+}
+button.secondary { background:#162144; box-shadow:none; color:#cfe8ff; }
+.controls { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+.stats { display:grid; grid-template-columns:repeat(4,minmax(120px,1fr)); gap:12px; margin-bottom:20px; }
+.stat { background:rgba(11,18,48,.74); border:1px solid rgba(108,182,255,.22); border-radius:18px; padding:14px; backdrop-filter:blur(8px); }
+.stat b { display:block; font-size:24px; }
+.stat span { color:var(--muted); font-size:13px; }
+.packzone { min-height:430px; display:grid; grid-template-columns:repeat(auto-fit, minmax(170px, 220px)); gap:18px; justify-content:center; align-items:start; }
+.card {
+  position:relative; aspect-ratio:2.5/3.5; min-height:0; width:100%; border-radius:6px; padding:12px; overflow:hidden;
+  background:linear-gradient(160deg,#07164c,#0c2e91 45%,#06103a);
+  border:2px solid rgba(135,217,255,.35);
+  box-shadow:0 18px 45px rgba(0,0,0,.45), inset 0 0 34px rgba(85,203,255,.18);
+  transform-style:preserve-3d; animation:deal .45s ease both;
+}
+.card::before {
+  content:""; position:absolute; inset:0; opacity:.9;
+  background:
+    linear-gradient(35deg, transparent 8%, rgba(0,255,255,.38) 10%, transparent 14%),
+    linear-gradient(120deg, transparent 20%, rgba(255,255,255,.18) 24%, transparent 31%),
+    linear-gradient(220deg, transparent 34%, rgba(27,69,255,.55) 39%, transparent 43%),
+    linear-gradient(310deg, transparent 52%, rgba(50,255,139,.38) 56%, transparent 60%),
+    radial-gradient(circle at 60% 40%, rgba(255,255,255,.18), transparent 22%);
+  clip-path:polygon(0 0,100% 0,100% 100%,0 100%);
+}
+.card::after {
+  content:""; position:absolute; inset:8px; border-radius:3px; border:1px solid rgba(255,255,255,.18); pointer-events:none;
+}
+@keyframes deal { from { opacity:0; transform:translateY(35px) scale(.92) rotate(-2deg); } to { opacity:1; transform:none; } }
+.side {
+  position:absolute; left:0; top:0; bottom:0; width:38px; background:linear-gradient(#101849,#050a24);
+  border-right:4px solid rgba(255,255,255,.82); display:flex; align-items:center; justify-content:center; z-index:2;
+}
+.side span { transform:rotate(-90deg); white-space:nowrap; color:#f4fbff; font-weight:900; letter-spacing:.02em; font-size:12px; }
+.logo { position:absolute; right:12px; top:10px; z-index:2; font-weight:900; font-style:italic; font-size:13px; color:#dff7ff; text-shadow:0 0 8px #41eeff; }
+.rc { position:absolute; left:8px; bottom:10px; z-index:2; border:2px solid white; border-radius:5px; padding:2px 5px; font-weight:900; font-size:11px; }
+.badge { position:absolute; right:10px; bottom:10px; z-index:2; width:48px; height:48px; border-radius:50%; border:2px solid rgba(255,255,255,.82); display:grid; place-items:center; text-align:center; font-size:8px; line-height:1.05; font-weight:900; background:rgba(2,8,30,.6); }
+.player {
+  position:absolute; left:50px; right:12px; top:55px; bottom:82px; z-index:1; display:grid; place-items:center;
+  font-size:48px; font-weight:1000; opacity:.62; color:rgba(255,255,255,.88); text-shadow:0 0 20px rgba(31,222,255,.7);
+}
+.info { position:absolute; left:50px; right:12px; bottom:78px; z-index:3; }
+.no { font-size:9px; color:#b8d7ff; font-weight:800; }
+.name { font-size:17px; line-height:1; font-weight:1000; text-shadow:0 2px 10px #001; }
+.team { margin-top:5px; color:#c9e5ff; font-weight:700; font-size:12px; }
+.rarity { position:absolute; left:50px; top:12px; z-index:3; padding:5px 8px; border-radius:999px; background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.2); font-size:9px; font-weight:900; }
+.insert { background:linear-gradient(160deg,#061439,#102ac4 38%,#3e0f84); }
+.insert .side { background:linear-gradient(#35124f,#090b35); }
+
+/* Distinct insert designs */
+.insert .insert-title { position:absolute; left:50px; right:12px; top:36px; z-index:4; font-size:10px; font-weight:1000; letter-spacing:.08em; text-transform:uppercase; color:#fff; opacity:.95; text-shadow:0 0 10px rgba(255,255,255,.55); }
+.insert .player { font-size:42px; }
+.insert-streets { background:linear-gradient(155deg,#090712,#1a1034 34%,#082456 68%,#050810); border-color:rgba(255,82,210,.72); }
+.insert-streets::before { background:linear-gradient(30deg, transparent 5%, rgba(255,0,174,.45) 8%, transparent 13%),linear-gradient(145deg, transparent 24%, rgba(0,248,255,.4) 28%, transparent 34%),repeating-linear-gradient(90deg, rgba(255,255,255,.08) 0 2px, transparent 2px 12px),radial-gradient(circle at 70% 18%, rgba(255,238,0,.28), transparent 26%); }
+.insert-streets .side { background:linear-gradient(#2a0724,#070919); border-right-color:rgba(255,99,221,.9); }
+.insert-streets .player { font-family:Impact, Inter, sans-serif; transform:skew(-8deg); color:rgba(255,255,255,.82); }
+.insert-alive { background:linear-gradient(160deg,#04291b,#077c56 40%,#06183a 78%); border-color:rgba(74,255,171,.72); }
+.insert-alive::before { background:radial-gradient(circle at 50% 42%, rgba(55,255,151,.5), transparent 25%),linear-gradient(22deg, transparent 22%, rgba(255,255,255,.24) 24%, transparent 28%),linear-gradient(118deg, transparent 45%, rgba(0,251,255,.42) 49%, transparent 55%),repeating-linear-gradient(-35deg, rgba(255,255,255,.08) 0 3px, transparent 3px 17px); }
+.insert-alive .side { background:linear-gradient(#05351e,#02160e); border-right-color:rgba(99,255,179,.9); }
+.insert-job { background:linear-gradient(160deg,#1a1606,#5c4610 42%,#15100a 78%); border-color:rgba(255,211,109,.85); }
+.insert-job::before { background:linear-gradient(45deg, transparent 12%, rgba(255,211,109,.38) 16%, transparent 21%),linear-gradient(135deg, transparent 38%, rgba(255,255,255,.25) 42%, transparent 49%),repeating-linear-gradient(0deg, rgba(255,255,255,.07) 0 2px, transparent 2px 11px),radial-gradient(circle at 35% 35%, rgba(255,230,150,.28), transparent 30%); }
+.insert-job .side { background:linear-gradient(#352506,#120d03); border-right-color:rgba(255,211,109,.92); }
+.insert-golazo { background:linear-gradient(160deg,#22060b,#9d1028 38%,#ff7b00 78%); border-color:rgba(255,122,0,.9); }
+.insert-golazo::before { background:radial-gradient(circle at 62% 38%, rgba(255,255,255,.4), transparent 16%),linear-gradient(25deg, transparent 10%, rgba(255,255,255,.3) 14%, transparent 20%),linear-gradient(115deg, transparent 35%, rgba(255,238,0,.45) 39%, transparent 46%),repeating-linear-gradient(60deg, rgba(255,255,255,.08) 0 4px, transparent 4px 18px); }
+.insert-golazo .side { background:linear-gradient(#4b050d,#160207); border-right-color:rgba(255,217,93,.95); }
+.insert-golazo .player { transform:rotate(-5deg) scale(1.08); color:rgba(255,248,199,.88); }
+.insert-selection { background:linear-gradient(160deg,#031130,#0636a1 34%,#12a8d8 72%,#051235); border-color:rgba(113,236,255,.9); }
+.insert-selection::before { background:linear-gradient(35deg, transparent 8%, rgba(0,255,255,.55) 10%, transparent 15%),linear-gradient(120deg, transparent 20%, rgba(255,255,255,.25) 24%, transparent 31%),linear-gradient(220deg, transparent 34%, rgba(33,90,255,.7) 39%, transparent 43%),linear-gradient(310deg, transparent 52%, rgba(50,255,139,.48) 56%, transparent 60%),radial-gradient(circle at 55% 42%, rgba(255,255,255,.22), transparent 24%); }
+.insert-selection .side { background:linear-gradient(#06276b,#030a23); border-right-color:rgba(108,233,255,.95); }
+.insert-icon { position:absolute; right:14px; bottom:65px; z-index:3; font-size:34px; font-weight:1000; opacity:.72; text-shadow:0 0 14px rgba(255,255,255,.6); }
+
+.auto { background:linear-gradient(160deg,#0b081d,#072b6b 35%,#351103 75%,#7b4700); border-color:rgba(255,211,109,.75); }
+.auto .logo { color:#ffeab0; text-shadow:0 0 10px #ffb800; }
+.auto .sig { position:absolute; left:52px; right:12px; bottom:46px; z-index:4; color:#ffd36d; font-family:cursive; font-size:18px; transform:rotate(-4deg); }
+.parallel-Green { border-color:rgba(85,255,140,.9); box-shadow:0 18px 45px rgba(0,0,0,.45), inset 0 0 42px rgba(85,255,140,.42); filter:hue-rotate(75deg) saturate(1.28); }
+.parallel-Gold { border-color:rgba(255,211,109,.95); box-shadow:0 18px 45px rgba(0,0,0,.45), inset 0 0 46px rgba(255,211,109,.62); filter:saturate(1.2) brightness(1.08); }
+.parallel-Orange { border-color:rgba(255,139,38,.9); box-shadow:0 18px 45px rgba(0,0,0,.45), inset 0 0 42px rgba(255,139,38,.45); filter:hue-rotate(145deg) saturate(1.2); }
+.parallel-Purple { border-color:rgba(191,91,255,.92); box-shadow:0 18px 45px rgba(0,0,0,.48), inset 0 0 46px rgba(191,91,255,.48); filter:hue-rotate(235deg) saturate(1.35); }
+.parallel-Black { border-color:rgba(210,220,255,.5); box-shadow:0 18px 45px rgba(0,0,0,.55), inset 0 0 42px rgba(0,0,0,.75); filter:brightness(.62) contrast(1.3); }
+.parallel-Red { border-color:rgba(255,55,67,.9); box-shadow:0 18px 45px rgba(0,0,0,.45), inset 0 0 42px rgba(255,55,67,.45); filter:hue-rotate(170deg) saturate(1.7); }
+.parallel-Padparadscha { border-color:rgba(255,126,92,.98); box-shadow:0 18px 45px rgba(0,0,0,.45), inset 0 0 56px rgba(255,126,92,.72), inset 0 0 18px rgba(255,222,121,.5); filter:hue-rotate(130deg) saturate(1.9) brightness(1.15); }
+.serial { position:absolute; right:10px; top:34px; z-index:5; padding:3px 6px; border-radius:3px; background:rgba(0,0,0,.48); border:1px solid rgba(255,255,255,.45); color:#fff; font-size:9px; font-weight:1000; letter-spacing:.02em; text-shadow:0 1px 5px #000; }
+.parallel-Green .serial { color:#98ffb8; }
+.parallel-Gold .serial { color:#ffe58a; }
+.parallel-Orange .serial { color:#ffbd79; }
+.parallel-Purple .serial { color:#dab3ff; }
+.parallel-Black .serial { color:#f4f4f4; }
+.parallel-Red .serial { color:#ff8c92; }
+.parallel-Padparadscha .serial { color:#ffd3bd; }
+
+.box-status { margin:-6px 0 18px; color:#cfe8ff; font-weight:800; background:rgba(11,18,48,.55); border:1px solid rgba(108,182,255,.18); border-radius:14px; padding:10px 12px; text-align:center; }
+.stackzone { min-height:390px; display:flex; justify-content:center; align-items:center; grid-template-columns:none; perspective:1100px; }
+.pack-stack { position:relative; width:min(230px, 72vw); aspect-ratio:2.5/3.5; cursor:pointer; user-select:none; }
+.pack-stack .card, .pack-stack .card-back { position:absolute; inset:0; width:100%; height:100%; transition:transform .25s ease, opacity .25s ease; }
+.pack-stack .card.revealed { box-shadow:0 20px 55px rgba(0,0,0,.55), inset 0 0 34px rgba(85,203,255,.18); }
+.pack-summary-note { grid-column:1/-1; text-align:center; color:#cfe8ff; font-weight:900; margin-bottom:4px; }
+.card-back { border-radius:6px; overflow:hidden; border:2px solid rgba(135,217,255,.45); background:linear-gradient(160deg,#07164c,#0c2e91 45%,#06103a); box-shadow:0 18px 45px rgba(0,0,0,.5), inset 0 0 44px rgba(48,232,255,.22); display:grid; place-items:center; text-align:center; }
+.card-back::before { content:""; position:absolute; inset:0; background:linear-gradient(35deg, transparent 8%, rgba(0,255,255,.38) 10%, transparent 14%),linear-gradient(120deg, transparent 20%, rgba(255,255,255,.18) 24%, transparent 31%),linear-gradient(220deg, transparent 34%, rgba(27,69,255,.55) 39%, transparent 43%),radial-gradient(circle at 60% 40%, rgba(255,255,255,.18), transparent 22%); }
+.card-back b { position:relative; z-index:2; font-size:22px; font-style:italic; text-shadow:0 0 12px #30e8ff; }
+.card-back span { position:relative; z-index:2; display:block; margin-top:8px; color:#b8d7ff; font-size:12px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
+.pack-help { position:absolute; left:50%; top:calc(100% + 14px); transform:translateX(-50%); color:#8fa9c9; font-size:13px; font-weight:800; white-space:nowrap; }
+.parallel-Green { border-color:rgba(65,255,132,.85); box-shadow:0 18px 45px rgba(0,0,0,.45), inset 0 0 42px rgba(65,255,132,.42); filter:hue-rotate(80deg) saturate(1.25); }
+.parallel-Purple { border-color:rgba(181,92,255,.9); box-shadow:0 18px 45px rgba(0,0,0,.45), inset 0 0 42px rgba(181,92,255,.45); filter:hue-rotate(235deg) saturate(1.35); }
+.parallel-Padparadscha { border-color:rgba(255,135,178,.95); box-shadow:0 18px 45px rgba(0,0,0,.45), inset 0 0 50px rgba(255,135,178,.72); filter:hue-rotate(130deg) saturate(1.9) brightness(1.15); }
+.parallel-Green .serial { color:#9cffb8; }
+.parallel-Purple .serial { color:#ddb8ff; }
+.parallel-Padparadscha .serial { color:#ffc1d6; }
+@media (max-width:520px) { .stackzone { min-height:340px; } .pack-stack { width:min(190px, 62vw); } }
+
+.tabs { display:flex; gap:8px; margin:22px 0 12px; flex-wrap:wrap; }
+.tab { background:#101a3d; padding:10px 14px; border-radius:999px; color:#cbe6ff; font-weight:800; cursor:pointer; }
+.tab.active { background:#1c76ff; color:white; }
+.collection { background:rgba(11,18,48,.72); border:1px solid rgba(108,182,255,.18); border-radius:20px; padding:16px; max-height:360px; overflow:auto; }
+.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:8px; }
+.item { display:flex; justify-content:space-between; gap:8px; padding:8px 10px; border-radius:12px; background:rgba(255,255,255,.06); color:#dbeeff; font-size:13px; }
+.item small { color:#8fb3dd; }
+@media (max-width:900px) { .packzone { grid-template-columns:repeat(2, minmax(145px, 210px)); } .stats { grid-template-columns:repeat(2,1fr); } }
+@media (max-width:520px) { .wrap { padding:16px; } .packzone { grid-template-columns:repeat(2, minmax(135px, 1fr)); gap:12px; } .card { border-radius:5px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <h1>Chrome Sapphire<br>Pack Opener</h1>
+    <div class="sub">Simple fan-made hobby box game. Each box has 8 packs with 4 cards per pack, 3 guaranteed numbered parallels, and 1 guaranteed autograph. Numbered cards are limited to one per pack.</div>
+  </div>
+  <div class="controls">
+    <button onclick="openPack()" id="openBtn">Open Hobby Box / Next Pack</button>
+    <button class="secondary" onclick="resetGame()">Reset</button>
+  </div>
+</header>
+
+<section class="stats">
+  <div class="stat"><b id="packs">0</b><span>Packs opened</span></div>
+  <div class="stat"><b id="owned">0</b><span>Unique cards</span></div>
+  <div class="stat"><b id="dupes">0</b><span>Duplicates</span></div>
+  <div class="stat"><b id="hits">0</b><span>Hits pulled</span></div>
+</section>
+
+<div id="boxStatus" class="box-status">Open a hobby box to start.</div>
+<section id="packzone" class="packzone"></section>
+
+<div class="tabs">
+  <div class="tab active" onclick="setView('all', this)">All</div>
+  <div class="tab" onclick="setView('base', this)">Base</div>
+  <div class="tab" onclick="setView('insert', this)">Inserts</div>
+  <div class="tab" onclick="setView('auto', this)">Autos</div>
+  <div class="tab" onclick="setView('dupes', this)">Dupes</div>
+</div>
+<section class="collection"><div id="collection" class="grid"></div></section>
+</div>
+
+<script>
+const DATA = {"base": [{"set": "Base", "no": "1", "name": "Justin Kluivert", "team": "AFC Bournemouth", "tag": "12"}, {"set": "Base", "no": "2", "name": "Tyler Adams", "team": "AFC Bournemouth", "tag": "12"}, {"set": "Base", "no": "3", "name": "Antoine Semenyo", "team": "AFC Bournemouth", "tag": "12"}, {"set": "Base", "no": "4", "name": "David Brooks", "team": "AFC Bournemouth", "tag": "12"}, {"set": "Base", "no": "5", "name": "Julio Soler", "team": "AFC Bournemouth", "tag": "RC"}, {"set": "Base", "no": "6", "name": "Bafodé Diakité", "team": "AFC Bournemouth", "tag": "12"}, {"set": "Base", "no": "7", "name": "Eli Junior Kroupi", "team": "AFC Bournemouth", "tag": "12"}, {"set": "Base", "no": "8", "name": "Evanilson", "team": "AFC Bournemouth", "tag": "12"}, {"set": "Base", "no": "9", "name": "Ben Gannon Doak", "team": "AFC Bournemouth", "tag": "12"}, {"set": "Base", "no": "10", "name": "Adrien Truffert", "team": "AFC Bournemouth", "tag": "12"}, {"set": "Base", "no": "11", "name": "Eberechi Eze", "team": "Arsenal", "tag": "12"}, {"set": "Base", "no": "12", "name": "Martin Ødegaard", "team": "Arsenal", "tag": "12"}, {"set": "Base", "no": "13", "name": "Bukayo Saka", "team": "Arsenal", "tag": "12"}, {"set": "Base", "no": "14", "name": "Declan Rice", "team": "Arsenal", "tag": "12"}, {"set": "Base", "no": "15", "name": "Viktor Gyökeres", "team": "Arsenal", "tag": "12"}, {"set": "Base", "no": "16", "name": "Gabriel Magalhães", "team": "Arsenal", "tag": "12"}, {"set": "Base", "no": "17", "name": "David Raya", "team": "Arsenal", "tag": "12"}, {"set": "Base", "no": "18", "name": "Martín Zubimendi", "team": "Arsenal", "tag": "12"}, {"set": "Base", "no": "19", "name": "Ethan Nwaneri", "team": "Arsenal", "tag": "(Future Stars)"}, {"set": "Base", "no": "20", "name": "Myles Lewis-Skelly", "team": "Arsenal", "tag": "(Future Stars)"}, {"set": "Base", "no": "21", "name": "Ben Broggio", "team": "Aston Villa", "tag": "RC"}, {"set": "Base", "no": "22", "name": "Morgan Rogers", "team": "Aston Villa", "tag": "12"}, {"set": "Base", "no": "23", "name": "Ollie Watkins", "team": "Aston Villa", "tag": "12"}, {"set": "Base", "no": "24", "name": "Amadou Onana", "team": "Aston Villa", "tag": "12"}, {"set": "Base", "no": "25", "name": "Youri Tielemans", "team": "Aston Villa", "tag": "12"}, {"set": "Base", "no": "26", "name": "John McGinn", "team": "Aston Villa", "tag": "12"}, {"set": "Base", "no": "27", "name": "Rory Wilson", "team": "Aston Villa", "tag": "RC"}, {"set": "Base", "no": "28", "name": "Evann Guessand", "team": "Aston Villa", "tag": "12"}, {"set": "Base", "no": "29", "name": "Bradley Burrowes", "team": "Aston Villa", "tag": "RC"}, {"set": "Base", "no": "30", "name": "Jamaldeen Jimoh-Aloba", "team": "Aston Villa", "tag": "RC"}, {"set": "Base", "no": "31", "name": "Gustavo Nunes", "team": "Brentford", "tag": "RC"}, {"set": "Base", "no": "32", "name": "Michael Kayode", "team": "Brentford", "tag": "12"}, {"set": "Base", "no": "33", "name": "Mikkel Damsgaard", "team": "Brentford", "tag": "12"}, {"set": "Base", "no": "34", "name": "Kevin Schade", "team": "Brentford", "tag": "12"}, {"set": "Base", "no": "35", "name": "Dango Ouattara", "team": "Brentford", "tag": "12"}, {"set": "Base", "no": "36", "name": "Nathan Collins", "team": "Brentford", "tag": "12"}, {"set": "Base", "no": "37", "name": "Romelle Donovan", "team": "Brentford", "tag": "RC"}, {"set": "Base", "no": "38", "name": "Sepp van den Berg", "team": "Brentford", "tag": "12"}, {"set": "Base", "no": "39", "name": "Jordan Henderson", "team": "Brentford", "tag": "12"}, {"set": "Base", "no": "40", "name": "Antoni Milambo", "team": "Brentford", "tag": "12"}, {"set": "Base", "no": "41", "name": "Brajan Gruda", "team": "Brighton & Hove Albion", "tag": "12"}, {"set": "Base", "no": "42", "name": "Stefanos Tzimas", "team": "Brighton & Hove Albion", "tag": "RC"}, {"set": "Base", "no": "43", "name": "Yasin Ayari", "team": "Brighton & Hove Albion", "tag": "RC"}, {"set": "Base", "no": "44", "name": "Tom Watson", "team": "Brighton & Hove Albion", "tag": "RC"}, {"set": "Base", "no": "45", "name": "Kaoru Mitoma", "team": "Brighton & Hove Albion", "tag": "12"}, {"set": "Base", "no": "46", "name": "Carlos Baleba", "team": "Brighton & Hove Albion", "tag": "12"}, {"set": "Base", "no": "47", "name": "Yankuba Minteh", "team": "Brighton & Hove Albion", "tag": "12"}, {"set": "Base", "no": "48", "name": "Georginio Rutter", "team": "Brighton & Hove Albion", "tag": "12"}, {"set": "Base", "no": "49", "name": "Harry Howell", "team": "Brighton & Hove Albion", "tag": "RC"}, {"set": "Base", "no": "50", "name": "Charalampos Kostoulas", "team": "Brighton & Hove Albion", "tag": "(Future Stars)"}, {"set": "Base", "no": "51", "name": "Maxime Estève", "team": "Burnley FC", "tag": "12"}, {"set": "Base", "no": "52", "name": "Marcus Edwards", "team": "Burnley FC", "tag": "12"}, {"set": "Base", "no": "53", "name": "Loum Tchaouna", "team": "Burnley FC", "tag": "12"}, {"set": "Base", "no": "54", "name": "Jaidon Anthony", "team": "Burnley FC", "tag": "12"}, {"set": "Base", "no": "55", "name": "Jaydon Banel", "team": "Burnley FC", "tag": "RC"}, {"set": "Base", "no": "56", "name": "Josh Cullen", "team": "Burnley FC", "tag": "12"}, {"set": "Base", "no": "57", "name": "Hannibal", "team": "Burnley FC", "tag": "12"}, {"set": "Base", "no": "58", "name": "Bashir Humphreys", "team": "Burnley FC", "tag": "RC"}, {"set": "Base", "no": "59", "name": "Quilindschy Hartman", "team": "Burnley FC", "tag": "12"}, {"set": "Base", "no": "60", "name": "Zian Flemming", "team": "Burnley FC", "tag": "RC"}, {"set": "Base", "no": "61", "name": "João Pedro", "team": "Chelsea", "tag": "12"}, {"set": "Base", "no": "62", "name": "Liam Delap", "team": "Chelsea", "tag": "12"}, {"set": "Base", "no": "63", "name": "Cole Palmer", "team": "Chelsea", "tag": "12"}, {"set": "Base", "no": "64", "name": "Shumaira Mheuka", "team": "Chelsea", "tag": "RC"}, {"set": "Base", "no": "65", "name": "Jorrel Hato", "team": "Chelsea", "tag": "12"}, {"set": "Base", "no": "66", "name": "Enzo Fernández", "team": "Chelsea", "tag": "12"}, {"set": "Base", "no": "67", "name": "Moisés Caicedo", "team": "Chelsea", "tag": "12"}, {"set": "Base", "no": "68", "name": "Estêvão Willian", "team": "Chelsea", "tag": "RC"}, {"set": "Base", "no": "69", "name": "Harrison Murray-Campbell", "team": "Chelsea", "tag": "RC"}, {"set": "Base", "no": "70", "name": "Tyrique George", "team": "Chelsea", "tag": "(Future Stars)"}, {"set": "Base", "no": "71", "name": "Justin Devenny", "team": "Crystal Palace", "tag": "RC"}, {"set": "Base", "no": "72", "name": "Romain Esse", "team": "Crystal Palace", "tag": "RC"}, {"set": "Base", "no": "73", "name": "Yeremy Pino", "team": "Crystal Palace", "tag": "12"}, {"set": "Base", "no": "74", "name": "Ismaïla Sarr", "team": "Crystal Palace", "tag": "12"}, {"set": "Base", "no": "75", "name": "Jean-Philippe Mateta", "team": "Crystal Palace", "tag": "12"}, {"set": "Base", "no": "76", "name": "Chris Richards", "team": "Crystal Palace", "tag": "12"}, {"set": "Base", "no": "77", "name": "Adam Wharton", "team": "Crystal Palace", "tag": "12"}, {"set": "Base", "no": "78", "name": "Maxence Lacroix", "team": "Crystal Palace", "tag": "12"}, {"set": "Base", "no": "79", "name": "Daichi Kamada", "team": "Crystal Palace", "tag": "12"}, {"set": "Base", "no": "80", "name": "Daniel Muñoz", "team": "Crystal Palace", "tag": "12"}, {"set": "Base", "no": "81", "name": "Charly Alcaraz", "team": "Everton", "tag": "12"}, {"set": "Base", "no": "82", "name": "Iliman Ndiaye", "team": "Everton", "tag": "12"}, {"set": "Base", "no": "83", "name": "Dwight McNeil", "team": "Everton", "tag": "12"}, {"set": "Base", "no": "84", "name": "Jordan Pickford", "team": "Everton", "tag": "12"}, {"set": "Base", "no": "85", "name": "Jarrad Branthwaite", "team": "Everton", "tag": "12"}, {"set": "Base", "no": "86", "name": "James Garner", "team": "Everton", "tag": "12"}, {"set": "Base", "no": "87", "name": "Jack Grealish", "team": "Everton", "tag": "12"}, {"set": "Base", "no": "88", "name": "Tyler Dibling", "team": "Everton", "tag": "12"}, {"set": "Base", "no": "89", "name": "Thierno Barry", "team": "Everton", "tag": "12"}, {"set": "Base", "no": "90", "name": "Beto", "team": "Everton", "tag": "12"}, {"set": "Base", "no": "91", "name": "Josh King", "team": "Fulham", "tag": "RC"}, {"set": "Base", "no": "92", "name": "Emile Smith Rowe", "team": "Fulham", "tag": "12"}, {"set": "Base", "no": "93", "name": "Raúl Jiménez", "team": "Fulham", "tag": "12"}, {"set": "Base", "no": "94", "name": "Alex Iwobi", "team": "Fulham", "tag": "12"}, {"set": "Base", "no": "95", "name": "Rodrigo Muniz", "team": "Fulham", "tag": "12"}, {"set": "Base", "no": "96", "name": "Adama Traoré", "team": "Fulham", "tag": "12"}, {"set": "Base", "no": "97", "name": "Harry Wilson", "team": "Fulham", "tag": "12"}, {"set": "Base", "no": "98", "name": "Jonah Kusi-Asare", "team": "Fulham", "tag": "RC"}, {"set": "Base", "no": "99", "name": "Kevin", "team": "Fulham", "tag": "12"}, {"set": "Base", "no": "100", "name": "Antonee Robinson", "team": "Fulham", "tag": "12"}, {"set": "Base", "no": "101", "name": "Ilia Gruev", "team": "Leeds United", "tag": "12"}, {"set": "Base", "no": "102", "name": "Jaka Bijol", "team": "Leeds United", "tag": "12"}, {"set": "Base", "no": "103", "name": "Harry Gray", "team": "Leeds United", "tag": "RC"}, {"set": "Base", "no": "104", "name": "Dominic Calvert-Lewin", "team": "Leeds United", "tag": "12"}, {"set": "Base", "no": "105", "name": "Brenden Aaronson", "team": "Leeds United", "tag": "12"}, {"set": "Base", "no": "106", "name": "Wilfried Gnonto", "team": "Leeds United", "tag": "12"}, {"set": "Base", "no": "107", "name": "Ao Tanaka", "team": "Leeds United", "tag": "12"}, {"set": "Base", "no": "108", "name": "Jayden Bogle", "team": "Leeds United", "tag": "12"}, {"set": "Base", "no": "109", "name": "Joël Piroe", "team": "Leeds United", "tag": "RC"}, {"set": "Base", "no": "110", "name": "Anton Stach", "team": "Leeds United", "tag": "12"}, {"set": "Base", "no": "111", "name": "Milos Kerkez", "team": "Liverpool FC", "tag": "12"}, {"set": "Base", "no": "112", "name": "Rio Ngumoha", "team": "Liverpool FC", "tag": "RC"}, {"set": "Base", "no": "113", "name": "Trent Koné-Doherty", "team": "Liverpool FC", "tag": "RC"}, {"set": "Base", "no": "114", "name": "Jeremie Frimpong", "team": "Liverpool FC", "tag": "12"}, {"set": "Base", "no": "115", "name": "Alexis Mac Allister", "team": "Liverpool FC", "tag": ""}, {"set": "Base", "no": "116", "name": "Virgil van Dijk", "team": "Liverpool FC", "tag": "12"}, {"set": "Base", "no": "117", "name": "Alexander Isak", "team": "Liverpool FC", "tag": "12"}, {"set": "Base", "no": "118", "name": "Mohamed Salah", "team": "Liverpool FC", "tag": "12"}, {"set": "Base", "no": "119", "name": "Florian Wirtz", "team": "Liverpool FC", "tag": "12"}, {"set": "Base", "no": "120", "name": "Hugo Ekitike", "team": "Liverpool FC", "tag": "12"}, {"set": "Base", "no": "121", "name": "Omar Marmoush", "team": "Manchester City", "tag": "12"}, {"set": "Base", "no": "122", "name": "Tijjani Reijnders", "team": "Manchester City", "tag": ""}, {"set": "Base", "no": "123", "name": "Bernardo Silva", "team": "Manchester City", "tag": "12"}, {"set": "Base", "no": "124", "name": "Phil Foden", "team": "Manchester City", "tag": "12"}, {"set": "Base", "no": "125", "name": "Erling Haaland", "team": "Manchester City", "tag": "12"}, {"set": "Base", "no": "126", "name": "Rayan Cherki", "team": "Manchester City", "tag": "12"}, {"set": "Base", "no": "127", "name": "Rodri", "team": "Manchester City", "tag": "12"}, {"set": "Base", "no": "128", "name": "Divine Mukasa", "team": "Manchester City", "tag": "RC"}, {"set": "Base", "no": "129", "name": "Reigan Heskey", "team": "Manchester City", "tag": "RC"}, {"set": "Base", "no": "130", "name": "Nico O'Reilly", "team": "Manchester City", "tag": "(Future Stars)"}, {"set": "Base", "no": "131", "name": "Bryan Mbeumo", "team": "Manchester United", "tag": "12"}, {"set": "Base", "no": "132", "name": "Amir Ibragimov", "team": "Manchester United", "tag": "RC"}, {"set": "Base", "no": "133", "name": "Sékou Koné", "team": "Manchester United", "tag": "RC"}, {"set": "Base", "no": "134", "name": "Matheus Cunha", "team": "Manchester United", "tag": "12"}, {"set": "Base", "no": "135", "name": "Bruno Fernandes", "team": "Manchester United", "tag": "12"}, {"set": "Base", "no": "136", "name": "Amad", "team": "Manchester United", "tag": "12"}, {"set": "Base", "no": "137", "name": "Benjamin Šeško", "team": "Manchester United", "tag": "12"}, {"set": "Base", "no": "138", "name": "Shea Lacey", "team": "Manchester United", "tag": "RC"}, {"set": "Base", "no": "139", "name": "Bendito Mantato", "team": "Manchester United", "tag": "RC"}, {"set": "Base", "no": "140", "name": "Chido Obi", "team": "Manchester United", "tag": "(Future Stars)"}, {"set": "Base", "no": "141", "name": "Yoane Wissa", "team": "Newcastle United", "tag": "12"}, {"set": "Base", "no": "142", "name": "Dan Burn", "team": "Newcastle United", "tag": "12"}, {"set": "Base", "no": "143", "name": "Bruno Guimarães", "team": "Newcastle United", "tag": "12"}, {"set": "Base", "no": "144", "name": "Anthony Gordon", "team": "Newcastle United", "tag": "12"}, {"set": "Base", "no": "145", "name": "Nick Woltemade", "team": "Newcastle United", "tag": "12"}, {"set": "Base", "no": "146", "name": "Joelinton", "team": "Newcastle United", "tag": "12"}, {"set": "Base", "no": "147", "name": "Sandro Tonali", "team": "Newcastle United", "tag": "12"}, {"set": "Base", "no": "148", "name": "Seung-Soo Park", "team": "Newcastle United", "tag": "RC"}, {"set": "Base", "no": "149", "name": "Anthony Elanga", "team": "Newcastle United", "tag": "12"}, {"set": "Base", "no": "150", "name": "Tino Livramento", "team": "Newcastle United", "tag": "12"}, {"set": "Base", "no": "151", "name": "Igor Jesus", "team": "Nottingham Forest", "tag": "RC"}, {"set": "Base", "no": "152", "name": "Callum Hudson-Odoi", "team": "Nottingham Forest", "tag": ""}, {"set": "Base", "no": "153", "name": "Dan Ndoye", "team": "Nottingham Forest", "tag": "12"}, {"set": "Base", "no": "154", "name": "Morgan Gibbs-White", "team": "Nottingham Forest", "tag": ""}, {"set": "Base", "no": "155", "name": "Murillo", "team": "Nottingham Forest", "tag": "12"}, {"set": "Base", "no": "156", "name": "James McAtee", "team": "Nottingham Forest", "tag": "12"}, {"set": "Base", "no": "157", "name": "Zach Abbott", "team": "Nottingham Forest", "tag": "RC"}, {"set": "Base", "no": "158", "name": "Chris Wood", "team": "Nottingham Forest", "tag": "12"}, {"set": "Base", "no": "159", "name": "Jair", "team": "Nottingham Forest", "tag": "RC"}, {"set": "Base", "no": "160", "name": "Omari Hutchinson", "team": "Nottingham Forest", "tag": "12"}, {"set": "Base", "no": "161", "name": "Noah Sadiki", "team": "Sunderland", "tag": "RC"}, {"set": "Base", "no": "162", "name": "Eliezer Mayenda", "team": "Sunderland", "tag": "RC"}, {"set": "Base", "no": "163", "name": "Chris Rigg", "team": "Sunderland", "tag": "RC"}, {"set": "Base", "no": "164", "name": "Habib Diarra", "team": "Sunderland", "tag": "12"}, {"set": "Base", "no": "165", "name": "Dan Ballard", "team": "Sunderland", "tag": "RC"}, {"set": "Base", "no": "166", "name": "Wilson Isidor", "team": "Sunderland", "tag": "RC"}, {"set": "Base", "no": "167", "name": "Enzo Le Fée", "team": "Sunderland", "tag": "12"}, {"set": "Base", "no": "168", "name": "Simon Adingra", "team": "Sunderland", "tag": "12"}, {"set": "Base", "no": "169", "name": "Granit Xhaka", "team": "Sunderland", "tag": "12"}, {"set": "Base", "no": "170", "name": "Chemsdine Talbi", "team": "Sunderland", "tag": "(Future Stars)"}, {"set": "Base", "no": "171", "name": "Cristian Romero", "team": "Tottenham Hotspur", "tag": "12"}, {"set": "Base", "no": "172", "name": "Randal Kolo Muani", "team": "Tottenham Hotspur", "tag": "12"}, {"set": "Base", "no": "173", "name": "Richarlison", "team": "Tottenham Hotspur", "tag": "12"}, {"set": "Base", "no": "174", "name": "Micky van de Ven", "team": "Tottenham Hotspur", "tag": "12"}, {"set": "Base", "no": "175", "name": "Xavi Simons", "team": "Tottenham Hotspur", "tag": "12"}, {"set": "Base", "no": "176", "name": "Mohammed Kudus", "team": "Tottenham Hotspur", "tag": "12"}, {"set": "Base", "no": "177", "name": "Kōta Takai", "team": "Tottenham Hotspur", "tag": "RC"}, {"set": "Base", "no": "178", "name": "Brennan Johnson", "team": "Tottenham Hotspur", "tag": "12"}, {"set": "Base", "no": "179", "name": "Archie Gray", "team": "Tottenham Hotspur", "tag": "(Future Stars)"}, {"set": "Base", "no": "180", "name": "Lucas Bergvall", "team": "Tottenham Hotspur", "tag": "(Future Stars)"}, {"set": "Base", "no": "181", "name": "El Hadji Malick Diouf", "team": "West Ham United", "tag": "RC"}, {"set": "Base", "no": "182", "name": "Jarrod Bowen", "team": "West Ham United", "tag": "12"}, {"set": "Base", "no": "183", "name": "Mateus Fernandes", "team": "West Ham United", "tag": "12"}, {"set": "Base", "no": "184", "name": "Igor Julio", "team": "West Ham United", "tag": "12"}, {"set": "Base", "no": "185", "name": "Luis Guilherme", "team": "West Ham United", "tag": "RC"}, {"set": "Base", "no": "186", "name": "Freddie Potts", "team": "West Ham United", "tag": "RC"}, {"set": "Base", "no": "187", "name": "Lucas Paquetá", "team": "West Ham United", "tag": "12"}, {"set": "Base", "no": "188", "name": "Tomáš Souček", "team": "West Ham United", "tag": "12"}, {"set": "Base", "no": "189", "name": "Ollie Scarles", "team": "West Ham United", "tag": "12"}, {"set": "Base", "no": "190", "name": "Aaron Wan-Bissaka", "team": "West Ham United", "tag": "12"}, {"set": "Base", "no": "191", "name": "Tolu Arokodare", "team": "Wolverhampton Wanderers", "tag": "RC"}, {"set": "Base", "no": "192", "name": "André", "team": "Wolverhampton Wanderers", "tag": "12"}, {"set": "Base", "no": "193", "name": "Jørgen Strand Larsen", "team": "Wolverhampton Wanderers", "tag": ""}, {"set": "Base", "no": "194", "name": "João Gomes", "team": "Wolverhampton Wanderers", "tag": "12"}, {"set": "Base", "no": "195", "name": "Jhon Arias", "team": "Wolverhampton Wanderers", "tag": "12"}, {"set": "Base", "no": "196", "name": "Hwang Hee-Chan", "team": "Wolverhampton Wanderers", "tag": "12"}, {"set": "Base", "no": "197", "name": "Fer López", "team": "Wolverhampton Wanderers", "tag": "RC"}, {"set": "Base", "no": "198", "name": "Emmanuel Agbadou", "team": "Wolverhampton Wanderers", "tag": "12"}, {"set": "Base", "no": "199", "name": "José Sá", "team": "Wolverhampton Wanderers", "tag": "12"}, {"set": "Base", "no": "200", "name": "Rodrigo Gomes", "team": "Wolverhampton Wanderers", "tag": "(Future Stars)"}], "inserts": [{"set": "The Streets Won't Forget", "no": "SWF-1", "name": "Harry Kewell", "team": "Liverpool FC", "tag": "INSERT"}, {"set": "The Streets Won't Forget", "no": "SWF-2", "name": "Eiður Guðjohnsen", "team": "Chelsea", "tag": "INSERT"}, {"set": "The Streets Won't Forget", "no": "SWF-3", "name": "Elano", "team": "Manchester City", "tag": "INSERT"}, {"set": "The Streets Won't Forget", "no": "SWF-4", "name": "Aaron Lennon", "team": "Tottenham Hotspur", "tag": "INSERT"}, {"set": "The Streets Won't Forget", "no": "SWF-5", "name": "Yakubu", "team": "Everton", "tag": "INSERT"}, {"set": "The Streets Won't Forget", "no": "SWF-6", "name": "Andy Johnson", "team": "Crystal Palace", "tag": "INSERT"}, {"set": "The Streets Won't Forget", "no": "SWF-7", "name": "Papiss Cissé", "team": "Newcastle United", "tag": "INSERT"}, {"set": "The Streets Won't Forget", "no": "SWF-8", "name": "Yannick Bolasie", "team": "Crystal Palace", "tag": "INSERT"}, {"set": "The Streets Won't Forget", "no": "SWF-9", "name": "Bobby Zamora", "team": "Fulham", "tag": "INSERT"}, {"set": "The Streets Won't Forget", "no": "SWF-10", "name": "Niko Kranjčar", "team": "Tottenham Hotspur", "tag": "INSERT"}, {"set": "The Streets Won't Forget", "no": "SWF-11", "name": "Stephen Ireland", "team": "Manchester City", "tag": "INSERT"}, {"set": "The Streets Won't Forget", "no": "SWF-12", "name": "John Arne Riise", "team": "Liverpool FC", "tag": "INSERT"}, {"set": "The Streets Won't Forget", "no": "SWF-13", "name": "Nolberto Solano", "team": "Newcastle United", "tag": "INSERT"}, {"set": "The Streets Won't Forget", "no": "SWF-14", "name": "Zoltán Gera", "team": "Fulham", "tag": "INSERT"}, {"set": "The Streets Won't Forget", "no": "SWF-15", "name": "Abou Diaby", "team": "Arsenal", "tag": "INSERT"}, {"set": "The Streets Won't Forget", "no": "SWF-16", "name": "Georgi Kinkladze", "team": "Manchester City", "tag": "INSERT"}, {"set": "The Streets Won't Forget", "no": "SWF-17", "name": "Tony Yeboah", "team": "Leeds United", "tag": "INSERT"}, {"set": "The Streets Won't Forget", "no": "SWF-18", "name": "Faustino Asprilla", "team": "Newcastle United", "tag": "INSERT"}, {"set": "The Streets Won't Forget", "no": "SWF-19", "name": "Gabriel Agbonlahor", "team": "Aston Villa", "tag": "INSERT"}, {"set": "The Streets Won't Forget", "no": "SWF-20", "name": "Kevin Phillips", "team": "Sunderland", "tag": "INSERT"}, {"set": "Alive And Kicking", "no": "AK-1", "name": "Harvey Elliott", "team": "Aston Villa", "tag": "INSERT"}, {"set": "Alive And Kicking", "no": "AK-2", "name": "Amad", "team": "Manchester United", "tag": "INSERT"}, {"set": "Alive And Kicking", "no": "AK-3", "name": "Dominik Szoboszlai", "team": "Liverpool FC", "tag": "INSERT"}, {"set": "Alive And Kicking", "no": "AK-4", "name": "Rodri", "team": "Manchester City", "tag": "INSERT"}, {"set": "Alive And Kicking", "no": "AK-5", "name": "Noni Madueke", "team": "Arsenal", "tag": "INSERT"}, {"set": "Alive And Kicking", "no": "AK-6", "name": "Tyler Dibling", "team": "Everton", "tag": "INSERT"}, {"set": "Alive And Kicking", "no": "AK-7", "name": "Reece James", "team": "Chelsea", "tag": "INSERT"}, {"set": "Alive And Kicking", "no": "AK-8", "name": "André", "team": "Wolverhampton Wanderers", "tag": "INSERT"}, {"set": "Alive And Kicking", "no": "AK-9", "name": "Georginio Rutter", "team": "Brighton & Hove Albion", "tag": "INSERT"}, {"set": "Alive And Kicking", "no": "AK-10", "name": "Harry Gray", "team": "Leeds United", "tag": "INSERT"}, {"set": "Alive And Kicking", "no": "AK-11", "name": "Antonee Robinson", "team": "Fulham", "tag": "INSERT"}, {"set": "Alive And Kicking", "no": "AK-12", "name": "Mohamed Salah", "team": "Liverpool FC", "tag": "INSERT"}, {"set": "Alive And Kicking", "no": "AK-13", "name": "Chris Rigg", "team": "Sunderland", "tag": "INSERT"}, {"set": "Alive And Kicking", "no": "AK-14", "name": "Estêvão Willian", "team": "Chelsea", "tag": "INSERT"}, {"set": "Alive And Kicking", "no": "AK-15", "name": "Iliman Ndiaye", "team": "Everton", "tag": "INSERT"}, {"set": "Alive And Kicking", "no": "AK-16", "name": "Bukayo Saka", "team": "Arsenal", "tag": "INSERT"}, {"set": "Alive And Kicking", "no": "AK-17", "name": "Joelinton", "team": "Newcastle United", "tag": "INSERT"}, {"set": "Alive And Kicking", "no": "AK-18", "name": "Ola Aina", "team": "Nottingham Forest", "tag": "INSERT"}, {"set": "Alive And Kicking", "no": "AK-19", "name": "Archie Gray", "team": "Tottenham Hotspur", "tag": "INSERT"}, {"set": "Alive And Kicking", "no": "AK-20", "name": "Omar Marmoush", "team": "Manchester City", "tag": "INSERT"}, {"set": "That's His Job", "no": "THJ-1", "name": "Tyler Adams", "team": "AFC Bournemouth", "tag": "INSERT"}, {"set": "That's His Job", "no": "THJ-2", "name": "Lewis Dunk", "team": "Brighton & Hove Albion", "tag": "INSERT"}, {"set": "That's His Job", "no": "THJ-3", "name": "William Saliba", "team": "Arsenal", "tag": "INSERT"}, {"set": "That's His Job", "no": "THJ-4", "name": "Ollie Watkins", "team": "Aston Villa", "tag": "INSERT"}, {"set": "That's His Job", "no": "THJ-5", "name": "Nathan Collins", "team": "Brentford", "tag": "INSERT"}, {"set": "That's His Job", "no": "THJ-6", "name": "Maxime Estève", "team": "Burnley FC", "tag": "INSERT"}, {"set": "That's His Job", "no": "THJ-7", "name": "Moisés Caicedo", "team": "Chelsea", "tag": "INSERT"}, {"set": "That's His Job", "no": "THJ-8", "name": "Jean-Philippe Mateta", "team": "Crystal Palace", "tag": "INSERT"}, {"set": "That's His Job", "no": "THJ-9", "name": "James Tarkowski", "team": "Everton", "tag": "INSERT"}, {"set": "That's His Job", "no": "THJ-10", "name": "Raúl Jiménez", "team": "Fulham", "tag": "INSERT"}, {"set": "That's His Job", "no": "THJ-11", "name": "Habib Diarra", "team": "Sunderland", "tag": "INSERT"}, {"set": "That's His Job", "no": "THJ-12", "name": "Virgil van Dijk", "team": "Liverpool FC", "tag": "INSERT"}, {"set": "That's His Job", "no": "THJ-13", "name": "Erling Haaland", "team": "Manchester City", "tag": "INSERT"}, {"set": "That's His Job", "no": "THJ-14", "name": "Bruno Fernandes", "team": "Manchester United", "tag": "INSERT"}, {"set": "That's His Job", "no": "THJ-15", "name": "Dan Burn", "team": "Newcastle United", "tag": "INSERT"}, {"set": "That's His Job", "no": "THJ-16", "name": "Chris Wood", "team": "Nottingham Forest", "tag": "INSERT"}, {"set": "That's His Job", "no": "THJ-17", "name": "Anton Stach", "team": "Leeds United", "tag": "INSERT"}, {"set": "That's His Job", "no": "THJ-18", "name": "João Palhinha", "team": "Tottenham Hotspur", "tag": "INSERT"}, {"set": "That's His Job", "no": "THJ-19", "name": "João Gomes", "team": "Wolverhampton Wanderers", "tag": "INSERT"}, {"set": "That's His Job", "no": "THJ-20", "name": "Jørgen Strand Larsen", "team": "Wolverhampton Wanderers", "tag": "INSERT"}, {"set": "That's His Job", "no": "STH-1", "name": "Stan Collymore", "team": "Liverpool FC", "tag": "INSERT"}, {"set": "That's His Job", "no": "STH-2", "name": "Sergio Agüero", "team": "Manchester City", "tag": "INSERT"}, {"set": "That's His Job", "no": "STH-3", "name": "Gareth Bale", "team": "Tottenham Hotspur", "tag": "INSERT"}, {"set": "That's His Job", "no": "STH-4", "name": "Cole Palmer", "team": "Chelsea", "tag": "INSERT"}, {"set": "That's His Job", "no": "STH-5", "name": "Reiss Nelson", "team": "Arsenal", "tag": "INSERT"}, {"set": "That's His Job", "no": "STH-6", "name": "Alisson", "team": "Liverpool FC", "tag": "INSERT"}, {"set": "That's His Job", "no": "STH-7", "name": "Rodrigo Muniz", "team": "Fulham", "tag": "INSERT"}, {"set": "That's His Job", "no": "STH-8", "name": "Steve Bruce", "team": "Manchester United", "tag": "INSERT"}, {"set": "That's His Job", "no": "STH-9", "name": "Oscar Bobb", "team": "Manchester City", "tag": "INSERT"}, {"set": "That's His Job", "no": "STH-10", "name": "Robin van Persie", "team": "Manchester United", "tag": "INSERT"}, {"set": "That's His Job", "no": "STH-11", "name": "Michael Owen", "team": "Manchester United", "tag": "INSERT"}, {"set": "That's His Job", "no": "STH-12", "name": "Sadio Mané", "team": "Liverpool FC", "tag": "INSERT"}, {"set": "That's His Job", "no": "STH-13", "name": "Paul Scholes", "team": "Manchester United", "tag": "INSERT"}, {"set": "That's His Job", "no": "STH-14", "name": "Steven Gerrard", "team": "Liverpool FC", "tag": "INSERT"}, {"set": "That's His Job", "no": "STH-15", "name": "Dirk Kuyt", "team": "Liverpool FC", "tag": "INSERT"}, {"set": "That's His Job", "no": "STH-16", "name": "Alex Iwobi", "team": "Fulham", "tag": "INSERT"}, {"set": "That's His Job", "no": "STH-17", "name": "Federico Macheda", "team": "Manchester United", "tag": "INSERT"}, {"set": "That's His Job", "no": "STH-18", "name": "Danny Welbeck", "team": "Arsenal", "tag": "INSERT"}, {"set": "That's His Job", "no": "STH-19", "name": "Declan Rice", "team": "Arsenal", "tag": "INSERT"}, {"set": "That's His Job", "no": "STH-20", "name": "Dejan Kulusevski", "team": "Tottenham Hotspur", "tag": "INSERT"}, {"set": "Golazo", "no": "GZ-1", "name": "Justin Kluivert", "team": "AFC Bournemouth", "tag": "INSERT"}, {"set": "Golazo", "no": "GZ-2", "name": "Kaoru Mitoma", "team": "Brighton & Hove Albion", "tag": "INSERT"}, {"set": "Golazo", "no": "GZ-3", "name": "James Tarkowski", "team": "Everton", "tag": "INSERT"}, {"set": "Golazo", "no": "GZ-4", "name": "Luis Suárez", "team": "Liverpool FC", "tag": "INSERT"}, {"set": "Golazo", "no": "GZ-5", "name": "Kobbie Mainoo", "team": "Manchester United", "tag": "INSERT"}, {"set": "Golazo", "no": "GZ-6", "name": "Dennis Bergkamp", "team": "Arsenal", "tag": "INSERT"}, {"set": "Golazo", "no": "GZ-7", "name": "Eric Cantona", "team": "Manchester United", "tag": "INSERT"}, {"set": "Golazo", "no": "GZ-8", "name": "Gus Poyet", "team": "Chelsea", "tag": "INSERT"}, {"set": "Golazo", "no": "GZ-9", "name": "Philippe Albert", "team": "Newcastle United", "tag": "INSERT"}, {"set": "Golazo", "no": "GZ-10", "name": "Nwankwo Kanu", "team": "Arsenal", "tag": "INSERT"}, {"set": "Golazo", "no": "GZ-11", "name": "Wayne Rooney", "team": "Manchester United", "tag": "INSERT"}, {"set": "Golazo", "no": "GZ-12", "name": "Gareth Bale", "team": "Tottenham Hotspur", "tag": "INSERT"}, {"set": "Golazo", "no": "GZ-13", "name": "Tony Yeboah", "team": "Leeds United", "tag": "INSERT"}, {"set": "Golazo", "no": "GZ-14", "name": "Thierry Henry", "team": "Arsenal", "tag": "INSERT"}, {"set": "Golazo", "no": "GZ-15", "name": "Olivier Giroud", "team": "Arsenal", "tag": "INSERT"}, {"set": "Golazo", "no": "GZ-16", "name": "Harry Kane", "team": "Tottenham Hotspur", "tag": "INSERT"}, {"set": "Golazo", "no": "GZ-17", "name": "Robert Pirès", "team": "Arsenal", "tag": "INSERT"}, {"set": "Golazo", "no": "GZ-18", "name": "Georgi Kinkladze", "team": "Manchester City", "tag": "INSERT"}, {"set": "Golazo", "no": "GZ-19", "name": "Andy Cole", "team": "Manchester United", "tag": "INSERT"}, {"set": "Golazo", "no": "GZ-20", "name": "Robbie Fowler", "team": "Liverpool FC", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "SS-1", "name": "Viktor Gyökeres", "team": "Arsenal", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "SS-2", "name": "Morgan Rogers", "team": "Aston Villa", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "SS-3", "name": "Antoine Semenyo", "team": "AFC Bournemouth", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "SS-4", "name": "Mikkel Damsgaard", "team": "Brentford", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "SS-5", "name": "Tom Watson", "team": "Brighton & Hove Albion", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "SS-6", "name": "Cole Palmer", "team": "Chelsea", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "SS-7", "name": "Wilfried Zaha", "team": "Crystal Palace", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "SS-8", "name": "Kiernan Dewsbury-Hall", "team": "Everton", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "SS-9", "name": "Clint Dempsey", "team": "Fulham", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "SS-10", "name": "Maxime Estève", "team": "Burnley FC", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "SS-11", "name": "Bryan Mbeumo", "team": "Manchester United", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "SS-12", "name": "Hugo Ekitike", "team": "Liverpool FC", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "SS-13", "name": "Erling Haaland", "team": "Manchester City", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "SS-14", "name": "Bruno Fernandes", "team": "Manchester United", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "SS-15", "name": "Alexander Isak", "team": "Liverpool FC", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "SS-16", "name": "Paul Scholes", "team": "Manchester United", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "SS-17", "name": "Chris Rigg", "team": "Sunderland", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "SS-18", "name": "Sandro Tonali", "team": "Newcastle United", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "SS-19", "name": "Sergio Agüero", "team": "Manchester City", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "SS-20", "name": "Fer López", "team": "Wolverhampton Wanderers", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "SS-21", "name": "David Silva", "team": "Manchester City", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "SS-22", "name": "Steven Gerrard", "team": "Liverpool FC", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "SS-23", "name": "Dominik Szoboszlai", "team": "Liverpool FC", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "SS-24", "name": "Patrick Vieira", "team": "Arsenal", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "SS-25", "name": "Didier Drogba", "team": "Chelsea", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "IS-1", "name": "Florian Wirtz", "team": "Liverpool FC", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "IS-2", "name": "Thierry Henry", "team": "Arsenal", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "IS-3", "name": "Mohamed Salah", "team": "Liverpool FC", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "IS-4", "name": "Bukayo Saka", "team": "Arsenal", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "IS-5", "name": "Gianluigi Donnarumma", "team": "Manchester City", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "IS-6", "name": "Estêvão Willian", "team": "Chelsea", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "IS-7", "name": "Frank Lampard", "team": "Chelsea", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "IS-8", "name": "Wayne Rooney", "team": "Everton", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "IS-9", "name": "Eric Cantona", "team": "Leeds United", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "IS-10", "name": "Virgil van Dijk", "team": "Liverpool FC", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "IS-11", "name": "Rodri", "team": "Manchester City", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "IS-12", "name": "Luis Suárez", "team": "Liverpool FC", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "IS-13", "name": "Ryan Giggs", "team": "Manchester United", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "IS-14", "name": "David Beckham", "team": "Manchester United", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "IS-15", "name": "Alan Shearer", "team": "Newcastle United", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "IS-16", "name": "Bruno Guimarães", "team": "Newcastle United", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "IS-17", "name": "Heung-Min Son", "team": "Tottenham Hotspur", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "IS-18", "name": "Harry Kane", "team": "Tottenham Hotspur", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "IS-19", "name": "Stuart Pearce", "team": "Nottingham Forest", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "IS-20", "name": "John Terry", "team": "Chelsea", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "IS-21", "name": "Roy Keane", "team": "Manchester United", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "IS-22", "name": "Dennis Bergkamp", "team": "Arsenal", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "IS-23", "name": "Kevin De Bruyne", "team": "Manchester City", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "IS-24", "name": "Gareth Bale", "team": "Tottenham Hotspur", "tag": "INSERT"}, {"set": "Sapphire Selections", "no": "IS-25", "name": "Cesc Fàbregas", "team": "Arsenal", "tag": "INSERT"}], "autos": [{"set": "Sapphire Autograph", "no": "CA-AB", "name": "Zach Abbott", "team": "Nottingham Forest", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-AC", "name": "Andy Cole", "team": "Manchester United", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-AI", "name": "Alexander Isak", "team": "Liverpool FC", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-AS", "name": "Alan Shearer", "team": "Newcastle United", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-BB", "name": "Ben Broggio", "team": "Aston Villa", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-BF", "name": "Bruno Fernandes", "team": "Manchester United", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-BG", "name": "Bruno Guimarães", "team": "Newcastle United", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-BM", "name": "Bryan Mbeumo", "team": "Manchester United", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-BO", "name": "Jarrod Bowen", "team": "West Ham United", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-BS", "name": "Bukayo Saka", "team": "Arsenal", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-CB", "name": "Harrison Murray-Campbell", "team": "Chelsea", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-CD", "name": "Clint Dempsey", "team": "Fulham", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-CF", "name": "Cesc Fàbregas", "team": "Arsenal", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-CL", "name": "Joe Cole", "team": "West Ham United", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-CM", "name": "Claude Makélélé", "team": "Chelsea", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-CP", "name": "Cole Palmer", "team": "Chelsea", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-CR", "name": "Chris Rigg", "team": "Sunderland", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-CT", "name": "Carlos Tevez", "team": "West Ham United", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-DD", "name": "Didier Drogba", "team": "Chelsea", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-DE", "name": "Dennis Bergkamp", "team": "Arsenal", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-DF", "name": "Duncan Ferguson", "team": "Everton", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-DM", "name": "Divine Mukasa", "team": "Manchester City", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-DR", "name": "Declan Rice", "team": "Arsenal", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-DS", "name": "David Silva", "team": "Manchester City", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-DY", "name": "Dwight Yorke", "team": "Manchester United", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-EC", "name": "Eric Cantona", "team": "Manchester United", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-EH", "name": "Erling Haaland", "team": "Manchester City", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-EM", "name": "Emiliano Martínez", "team": "Aston Villa", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-EV", "name": "Estêvão Willian", "team": "Chelsea", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-EZE", "name": "Eberechi Eze", "team": "Arsenal", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-FL", "name": "Frank Lampard", "team": "Chelsea", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-FR", "name": "Robbie Fowler", "team": "Liverpool FC", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-FT", "name": "Fernando Torres", "team": "Liverpool FC", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-FW", "name": "Florian Wirtz", "team": "Liverpool FC", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-GA", "name": "Gabriel Agbonlahor", "team": "Aston Villa", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-GB", "name": "Gareth Bale", "team": "Tottenham Hotspur", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-GK", "name": "Petr Čech", "team": "Chelsea", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-GP", "name": "Gustavo Poyet", "team": "Chelsea", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-GR", "name": "Jack Grealish", "team": "Everton", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-GS", "name": "Ryan Giggs", "team": "Manchester United", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-GZ", "name": "Gianfranco Zola", "team": "Chelsea", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-HE", "name": "Hugo Ekitike", "team": "Liverpool FC", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-HG", "name": "Harry Gray", "team": "Leeds United", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-HK", "name": "Harry Kane", "team": "Tottenham Hotspur", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-HS", "name": "Heung-Min Son", "team": "Tottenham Hotspur", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-JD", "name": "Jermain Defoe", "team": "Tottenham Hotspur", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-JT", "name": "John Terry", "team": "Chelsea", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-KA", "name": "Kanu", "team": "Arsenal", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-KDB", "name": "Kevin De Bruyne", "team": "Manchester City", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-LF", "name": "Les Ferdinand", "team": "Tottenham Hotspur", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-LM", "name": "Luka Modrić", "team": "Tottenham Hotspur", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-LS", "name": "Luis Suárez", "team": "Liverpool FC", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-MA", "name": "Mikel Arteta", "team": "Arsenal", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-MC", "name": "Matheus Cunha", "team": "Manchester United", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-MK", "name": "Mohammed Kudus", "team": "Tottenham Hotspur", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-MN", "name": "Mark Noble", "team": "West Ham United", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-MOU", "name": "José Mourinho", "team": "Chelsea", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-MØ", "name": "Martin Ødegaard", "team": "Arsenal", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-NE", "name": "Neville Southall", "team": "Everton", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-PF", "name": "Phil Foden", "team": "Manchester City", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-PG", "name": "Pep Guardiola", "team": "Manchester City", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-PK", "name": "Patrick Kluivert", "team": "Newcastle United", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-PS", "name": "Paul Scholes", "team": "Manchester United", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-PV", "name": "Patrick Vieira", "team": "Arsenal", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-RH", "name": "Raphinha", "team": "Leeds United", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-RK", "name": "Roy Keane", "team": "Manchester United", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-RN", "name": "Rio Ngumoha", "team": "Liverpool FC", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-RP", "name": "Robert Pirès", "team": "Arsenal", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-RVP", "name": "Robin van Persie", "team": "Manchester United", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-SA", "name": "Sergio Agüero", "team": "Manchester City", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-SAF", "name": "Sir Alex Ferguson", "team": "Manchester United", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-SG", "name": "Steven Gerrard", "team": "Liverpool FC", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-SH", "name": "Peter Schmeichel", "team": "Manchester United", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-SL", "name": "Shea Lacey", "team": "Manchester United", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-SM", "name": "Shumaira Mheuka", "team": "Chelsea", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-SO", "name": "Dominic Solanke", "team": "Tottenham Hotspur", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-TD", "name": "Tyler Dibling", "team": "Everton", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-TH", "name": "Thierry Henry", "team": "Arsenal", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-TK", "name": "Trent Koné-Doherty", "team": "Liverpool FC", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-TW", "name": "Tom Watson", "team": "Brighton & Hove Albion", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-UF", "name": "El Hadji Malick Diouf", "team": "West Ham United", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-VG", "name": "Viktor Gyökeres", "team": "Arsenal", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-VV", "name": "Virgil van Dijk", "team": "Liverpool FC", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-WH", "name": "Adam Wharton", "team": "Crystal Palace", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-WR", "name": "Wayne Rooney", "team": "Manchester United", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-XS", "name": "Xavi Simons", "team": "Tottenham Hotspur", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-YA", "name": "Yaya Touré", "team": "Manchester City", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-YI", "name": "Yasin Ayari", "team": "Brighton & Hove Albion", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-ZI", "name": "Zlatan Ibrahimović", "team": "Manchester United", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-DB", "name": "David Beckham", "team": "Manchester United", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-MS", "name": "Mohamed Salah", "team": "Liverpool FC", "tag": "AUTO"}, {"set": "Sapphire Autograph", "no": "CA-MD", "name": "Max Dowman", "team": "Arsenal", "tag": "AUTO"}]};
+const state = JSON.parse(localStorage.getItem("sapphirePackState") || '{"packs":0,"boxes":0,"owned":{},"dupes":0,"hits":0}');
+state.boxes = state.boxes || 0;
+state.packs = state.packs || 0;
+state.owned = state.owned || {};
+state.dupes = state.dupes || 0;
+state.hits = state.hits || 0;
+let currentView = "all";
+let activeBoxPlan = null;
+let activePackIndex = 0;
+let currentPackCards = [];
+let topCardOrder = [];
+let topCardRevealed = false;
+let packComplete = false;
+
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function chance(n) { return Math.random() < 1/n; }
+const numberedParallels = [
+  { name:"Padparadscha", label:"Padparadscha 1/1", limit:1, odds:800 },
+  { name:"Red", label:"Red /5", limit:5, odds:300 },
+  { name:"Black", label:"Black /10", limit:10, odds:160 },
+  { name:"Purple", label:"Purple /15", limit:15, odds:100 },
+  { name:"Orange", label:"Orange /25", limit:25, odds:60 },
+  { name:"Gold", label:"Gold /50", limit:50, odds:30 },
+  { name:"Green", label:"Green /75", limit:75, odds:15 }
+];
+
+function baseParallel() {
+  return { name:"Base", label:"Base", limit:null, serial:null };
+}
+
+function chooseGuaranteedParallel() {
+  // Weighted from the requested game odds: Green 1:15, Gold 1:30, Orange 1:60, Purple 1:100, Black 1:160, Red 1:300, Padparadscha 1:800.
+  const total = numberedParallels.reduce((sum, p) => sum + (1 / p.odds), 0);
+  let roll = Math.random() * total;
+  for (const p of [...numberedParallels].reverse()) {
+    roll -= (1 / p.odds);
+    if (roll <= 0) return {...p, serial: Math.floor(Math.random() * p.limit) + 1};
+  }
+  const p = numberedParallels[numberedParallels.length - 1];
+  return {...p, serial: Math.floor(Math.random() * p.limit) + 1};
+}
+
+function makeCard(kind, forcedParallel = null) {
+  let card;
+  if (kind === "auto") {
+    card = {...pick(DATA.autos), kind:"auto"};
+  } else if (kind === "insert") {
+    card = {...pick(DATA.inserts), kind:"insert"};
+  } else {
+    card = {...pick(DATA.base), kind:"base"};
+  }
+  const parallel = forcedParallel || baseParallel();
+  card.parallel = parallel.name;
+  card.parallelLabel = parallel.label;
+  card.numberedTo = parallel.limit;
+  card.serial = parallel.serial;
+  card.key = `${card.kind}|${card.set}|${card.no}|${card.parallel}|${card.serial || "base"}`;
+  return card;
+}
+
+function shuffledIndexes(size) {
+  return Array.from({length:size}, (_, i) => i).sort(() => Math.random() - 0.5);
+}
+
+function buildHobbyBox() {
+  const packs = Array.from({length:8}, () => Array.from({length:4}, () => ({kind:"base", numbered:false})));
+  const autoPack = Math.floor(Math.random() * 8);
+  packs[autoPack][Math.floor(Math.random() * 4)] = {kind:"auto", numbered:false};
+
+  const numberedPacks = shuffledIndexes(8).filter(i => i !== autoPack).slice(0, 3);
+  numberedPacks.forEach(packIndex => {
+    const slot = Math.floor(Math.random() * 4);
+    packs[packIndex][slot] = {kind: chance(5) ? "insert" : "base", numbered:true};
+  });
+
+  const preferredInsertPacks = shuffledIndexes(8).filter(i => i !== autoPack && !numberedPacks.includes(i)).slice(0, 3);
+  preferredInsertPacks.forEach(packIndex => {
+    const openSlots = packs[packIndex].map((slot, i) => slot.kind === "base" && !slot.numbered ? i : -1).filter(i => i >= 0);
+    if (openSlots.length) packs[packIndex][pick(openSlots)] = {kind:"insert", numbered:false};
+  });
+
+  return packs;
+}
+
+function cardFromSlot(slot) {
+  if (slot.numbered) return makeCard(slot.kind, chooseGuaranteedParallel());
+  return makeCard(slot.kind);
+}
+
+function openPack() {
+  // If a pack is still mid-reveal, the main button acts like a tap on the stack.
+  if (currentPackCards.length && !packComplete) {
+    revealNextCard();
+    return;
+  }
+
+  // Clear the previous completed pack/stack before loading the next pack.
+  currentPackCards = [];
+  topCardOrder = [];
+  topCardRevealed = false;
+  packComplete = false;
+  const zone = document.getElementById("packzone");
+  if (zone) {
+    zone.className = "packzone";
+    zone.innerHTML = "";
+  }
+
+  if (!activeBoxPlan || activePackIndex >= 8) {
+    activeBoxPlan = buildHobbyBox();
+    activePackIndex = 0;
+    state.boxes++;
+  }
+  currentPackCards = activeBoxPlan[activePackIndex].map(cardFromSlot);
+  activePackIndex++;
+  topCardOrder = currentPackCards.map((_, i) => i);
+  currentPackCards.forEach(card => {
+    card._revealed = false;
+    card._addedToCollection = false;
+  });
+  state.packs++;
+  renderStack();
+  save();
+}
+
+function addCardToCollection(card) {
+  if (card._addedToCollection) return;
+  if (state.owned[card.key]) { state.owned[card.key].count++; state.dupes++; }
+  else state.owned[card.key] = {...card, count:1};
+  if (card.kind !== "base" || card.parallel !== "Base") state.hits++;
+  card._addedToCollection = true;
+}
+
+function revealNextCard() {
+  if (!currentPackCards.length || packComplete || !topCardOrder.length) return;
+
+  const topIndex = topCardOrder[0];
+  const topCard = currentPackCards[topIndex];
+
+  if (!topCardRevealed) {
+    topCard._revealed = true;
+    addCardToCollection(topCard);
+    topCardRevealed = true;
+    renderStack();
+    save();
+    return;
+  }
+
+  if (topCardOrder.length > 1) {
+    const moved = topCardOrder.shift();
+    topCardOrder.push(moved);
+    topCardRevealed = !!currentPackCards[topCardOrder[0]]._revealed;
+    renderStack();
+    save();
+    return;
+  }
+
+  packComplete = true;
+  renderPackSummary();
+  save();
+}
+
+function renderStack() {
+  const zone = document.getElementById("packzone");
+  zone.className = "packzone stackzone";
+  zone.innerHTML = `<div class="pack-stack" onclick="revealNextCard()"></div>`;
+  const stack = zone.querySelector(".pack-stack");
+
+  topCardOrder.forEach((cardIndex, position) => {
+    const card = currentPackCards[cardIndex];
+    const isTop = position === 0;
+    const offset = position;
+    let el;
+
+    if (isTop && topCardRevealed) {
+      el = renderCard(card);
+      el.classList.add("revealed");
+      el.style.zIndex = 80;
+    } else {
+      el = document.createElement("div");
+      el.className = "card-back";
+      el.innerHTML = `<div><b>topps chrome</b><span>${isTop ? "Tap to reveal" : "Pack card"}</span></div>`;
+      el.style.zIndex = 60 - position;
+    }
+
+    el.style.transform = `translate(${offset * 5}px, ${offset * 6}px) rotate(${offset * .9}deg)`;
+    stack.appendChild(el);
+  });
+
+  const revealedCount = currentPackCards.filter(c => c._revealed).length;
+  const help = document.createElement("div");
+  help.className = "pack-help";
+  if (!topCardRevealed) {
+    help.textContent = `Card ${revealedCount + 1} of ${currentPackCards.length} · tap to reveal`;
+  } else if (topCardOrder.length > 1) {
+    help.textContent = `Tap again to move this card to the back`;
+  } else {
+    help.textContent = `Final card revealed · tap again to show the full pack`;
+  }
+  stack.appendChild(help);
+  updateBoxStatus();
+}
+
+function renderPackSummary() {
+  const zone = document.getElementById("packzone");
+  zone.className = "packzone";
+  zone.innerHTML = `<div class="pack-summary-note">Pack complete — here are your 4 cards.<br><button onclick="openPack()">Open Next Pack</button></div>`;
+  currentPackCards.forEach(card => zone.appendChild(renderCard(card)));
+  updateBoxStatus();
+}
+
+function updateBoxStatus() {
+  const status = document.getElementById("boxStatus");
+  if (!status) return;
+  const boxNo = state.boxes || 0;
+  const packNo = activeBoxPlan ? Math.min(activePackIndex, 8) : 0;
+  status.textContent = activeBoxPlan ? `Hobby Box ${boxNo} · Pack ${packNo} of 8 · 3 numbered + 1 auto guaranteed per box` : "Open a hobby box to start.";
+  const btn = document.getElementById("openBtn");
+  if (btn) {
+    if (!activeBoxPlan || (activePackIndex >= 8 && packComplete)) btn.textContent = "Open New Hobby Box";
+    else if (currentPackCards.length && !packComplete) btn.textContent = topCardRevealed ? "Move Card / Continue" : "Reveal Card";
+    else btn.textContent = "Open Next Pack";
+  }
+}
+
+function insertDesignClass(setName) {
+  const s = String(setName || "").toLowerCase();
+  if (s.includes("streets")) return "insert-streets";
+  if (s.includes("alive")) return "insert-alive";
+  if (s.includes("job")) return "insert-job";
+  if (s.includes("golazo")) return "insert-golazo";
+  if (s.includes("sapphire") || s.includes("selection")) return "insert-selection";
+  return "insert-selection";
+}
+
+function insertIcon(setName) {
+  const s = String(setName || "").toLowerCase();
+  if (s.includes("streets")) return "SWF";
+  if (s.includes("alive")) return "AK";
+  if (s.includes("job")) return "JOB";
+  if (s.includes("golazo")) return "G⚽";
+  if (s.includes("sapphire") || s.includes("selection")) return "SS";
+  return "INS";
+}
+
+function renderCard(card) {
+  const el = document.createElement("div");
+  const parClass = card.parallel !== "Base" ? ` parallel-${card.parallel}` : "";
+  const insClass = card.kind === "insert" ? ` ${insertDesignClass(card.set)}` : "";
+  el.className = `card ${card.kind}${card.kind==="auto" ? " auto" : ""}${card.kind==="insert" ? " insert" : ""}${insClass}${parClass}`;
+  const initials = card.name.split(/\s+/).map(x=>x[0]).join("").slice(0,3).toUpperCase();
+  const title = card.kind === "base" ? "Base Set" : card.set;
+  const badge = card.parallel === "Base" ? (card.kind==="auto" ? "AUTO" : card.kind==="insert" ? "INSERT" : "SAPPHIRE") : card.parallelLabel;
+  const serialText = card.numberedTo ? `${card.serial}/${card.numberedTo}` : "";
+  el.innerHTML = `
+    <div class="side"><span>${escapeHtml(card.name)}</span></div>
+    <div class="logo">topps chrome</div>
+    <div class="rarity">${escapeHtml(badge)}</div>
+    ${card.kind === "insert" ? `<div class="insert-title">${escapeHtml(card.set)}</div><div class="insert-icon">${escapeHtml(insertIcon(card.set))}</div>` : ""}
+    <div class="player">${escapeHtml(initials)}</div>
+    <div class="info">
+      <div class="no">${escapeHtml(card.no)} · ${escapeHtml(title)}</div>
+      <div class="name">${escapeHtml(card.name)}</div>
+      <div class="team">${escapeHtml(card.team)}</div>
+    </div>
+    ${card.tag === "RC" ? '<div class="rc">RC</div>' : ""}
+    ${serialText ? `<div class="serial">${escapeHtml(serialText)}</div>` : ""}
+    ${card.kind === "auto" ? '<div class="sig">Certified Autograph</div>' : ""}
+    <div class="badge">${escapeHtml(card.team.replace(" FC","").split(" ").slice(0,2).join(" "))}</div>
+  `;
+  return el;
+}
+
+function escapeHtml(s) {
+  return String(s || "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function setView(v, el) {
+  currentView = v;
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  el.classList.add("active");
+  drawCollection();
+}
+
+function drawCollection() {
+  document.getElementById("packs").textContent = state.packs;
+  document.getElementById("owned").textContent = Object.keys(state.owned).length;
+  document.getElementById("dupes").textContent = state.dupes;
+  document.getElementById("hits").textContent = state.hits;
+  updateBoxStatus();
+  let cards = Object.values(state.owned).sort((a,b)=>a.kind.localeCompare(b.kind)||a.set.localeCompare(b.set)||String(a.no).localeCompare(String(b.no), undefined, {numeric:true}));
+  if (currentView !== "all") {
+    if (currentView === "dupes") cards = cards.filter(c=>c.count > 1);
+    else cards = cards.filter(c=>c.kind === currentView);
+  }
+  const box = document.getElementById("collection");
+  box.innerHTML = cards.length ? cards.map(c => `
+    <div class="item">
+      <div><b>${escapeHtml(c.name)}</b><br><small>${escapeHtml(c.set)} #${escapeHtml(c.no)} · ${escapeHtml(c.team)} · ${escapeHtml(c.parallelLabel || c.parallel)}${c.numberedTo ? ` · ${escapeHtml(c.serial + "/" + c.numberedTo)}` : ""}</small></div>
+      <div>x${c.count}</div>
+    </div>`).join("") : '<div class="item">No cards here yet. Open a pack!</div>';
+}
+
+function save() {
+  localStorage.setItem("sapphirePackState", JSON.stringify(state));
+  drawCollection();
+}
+
+function resetGame() {
+  if (!confirm("Reset your collection?")) return;
+  localStorage.removeItem("sapphirePackState");
+  location.reload();
+}
+
+drawCollection();
+</script>
+</body>
+</html>
